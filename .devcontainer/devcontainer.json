@@ -1,0 +1,7 @@
+{
+  "name": "recipes",
+  "features": {
+    "ghcr.io/devcontainers/features/mongodb:1": {}
+  },
+  "forwardPorts": [27017]
+}

@@ -2,32 +2,31 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import authRoutes from "./routes/auth.routes.js";
 
 const app = express();
 
-// middleware
-app.use(cors({ origin: "*" })); // we'll tighten this later
-app.use(express.json());
+app.use(express.json());            // <- must be before routes
+app.use(cors({ origin: "*" }));
 
-// simple routes
-app.get("/", (_req, res) => res.send("Recipes API is running"));
 app.get("/healthz", (_req, res) => res.send("ok"));
+app.post("/echo", (req, res) => res.json({ got: req.body }));
 
-// --- MongoDB connect ---
+app.use("/api/v1/auth", authRoutes);
+
+// DB connect (unchanged)
 const MONGO_URL = process.env.MONGO_URL;
 if (!MONGO_URL) {
-  console.error("Missing MONGO_URL in .env");
+  console.error("Missing MONGO_URL");
   process.exit(1);
 }
 
 mongoose
   .connect(MONGO_URL)
   .then(() => {
-    console.log("MongoDB connected");
+    console.log("✅ MongoDB connected");
     const PORT = process.env.PORT || 8080;
-    app.listen(PORT, () => {
-      console.log(`API listening on http://localhost:${PORT}`);
-    });
+    app.listen(PORT, () => console.log(`API listening on :${PORT}`));
   })
   .catch((err) => {
     console.error("❌ Mongo connection error:", err.message);

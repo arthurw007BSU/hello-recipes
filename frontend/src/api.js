@@ -1,0 +1,37 @@
+const BASE = import.meta.env.VITE_API_URL;
+
+async function request(path, { method = "GET", body, token } = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const isJson = res.headers.get("content-type")?.includes("application/json");
+  const data = isJson ? await res.json() : await res.text();
+
+  if (!res.ok) {
+    const msg = isJson && data?.error ? data.error : data || "request_failed";
+    throw new Error(msg);
+  }
+  return data;
+}
+
+export const api = {
+  // health (for testing)
+  health: () => request(`/healthz`),
+
+  // auth (we’ll use these next step)
+  signup: (username, password) => request(`/auth/signup`, { method: "POST", body: { username, password } }),
+  login:  (username, password) => request(`/auth/login`,  { method: "POST", body: { username, password } }),
+
+  // recipes (later)
+  myRecipes:    (token)          => request(`/recipes/mine`, { token }),
+  createRecipe: (token, payload) => request(`/recipes`, { method: "POST", body: payload, token }),
+  getRecipe:    (token, id)      => request(`/recipes/${id}`, { token }),
+  updateRecipe: (token, id, b)   => request(`/recipes/${id}`, { method: "PUT", body: b, token }),
+  deleteRecipe: (token, id)      => request(`/recipes/${id}`, { method: "DELETE", token }),
+};

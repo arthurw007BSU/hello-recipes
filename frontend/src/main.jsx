@@ -1,0 +1,59 @@
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from "react-router-dom";
+import Signup from "./pages/Signup.jsx";
+import Login from "./pages/Login.jsx";
+import RecipesList from "./pages/RecipesList.jsx";
+import Protected from "./Protected.jsx";
+import { auth } from "./auth";
+import "./index.css";
+
+function Shell({ children }) {
+  const nav = useNavigate();
+  const authed = !!localStorage.getItem("token");
+
+  function signOut() {
+    auth.logout();           // clear token
+    nav("/login", { replace: true });
+  }
+
+  return (
+    <div style={{ maxWidth: 720, margin: "2rem auto", padding: "0 1rem" }}>
+      <header style={{ display: "flex", gap: 12, marginBottom: 24, alignItems: "center" }}>
+        <h1 style={{ marginRight: "auto" }}>🍲 Recipes</h1>
+        <Link to="/recipes">My Recipes</Link>
+        {authed ? (
+          <button onClick={signOut}>Sign out</button>
+        ) : (
+          <>
+            <Link to="/signup">Signup</Link>
+            <Link to="/login">Login</Link>
+          </>
+        )}
+      </header>
+      {children}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Shell>
+        <Routes>
+          <Route path="/" element={<Navigate to="/signup" replace />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/recipes"
+            element={
+              <Protected>
+                <RecipesList />
+              </Protected>
+            }
+          />
+        </Routes>
+      </Shell>
+    </BrowserRouter>
+  </React.StrictMode>
+);

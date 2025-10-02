@@ -11,11 +11,13 @@ const app = express();
 app.use(express.json());            // <- must be before routes
 app.use(cors({ origin: "*" }));
 app.use("/api/v1/recipes", recipeRoutes);
+app.use("/api/v1/auth", authRoutes);
 
-app.get("/healthz", (_req, res) => res.send("ok"));
+//app.get("/healthz", (_req, res) => res.send("ok"));
+app.get("/api/v1/healthz", (_req, res) => res.send("ok"));
 app.post("/echo", (req, res) => res.json({ got: req.body }));
 
-app.use("/api/v1/auth", authRoutes);
+
 
 // DB connect (unchanged)
 const MONGO_URL = process.env.MONGO_URL;

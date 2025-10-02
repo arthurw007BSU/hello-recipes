@@ -10,6 +10,8 @@ yarn-error.log*
 .env
 *.local
 uploads/
+myfile.json
+todaystoken
 
 # Editor/OS
 .DS_Store

@@ -6,8 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-.arthurREADME
-.dev.sh
+
 node_modules
 dist
 dist-ssr
@@ -23,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.arthurREADME
+.dev.sh
+secrets/

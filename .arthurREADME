@@ -1,0 +1,76 @@
+1) Start the backend (Docker)
+
+    From the repo root (where docker-compose.yml lives):
+    docker compose up -d --build
+    docker compose ps
+    You should see api and mongo Up.
+    Tail the API logs briefly:
+    docker compose logs -f api
+    Look for: ✅ MongoDB connected and API listening on :8080 (Ctrl+C to stop tailing).
+
+2) Quick backend health checks
+    Inside the Codespace terminal:
+    curl -s http://localhost:8080/api/v1/healthz
+    # expect: ok
+    In the Ports panel:
+    Make 8080 “Public”.
+    Click/copy the forwarded URL for 8080 and test in your browser:
+    https://<your-8080-forwarded>.app.github.dev/api/v1/healthz
+    You should see ok.
+    If the 8080 forwarded URL changed since last time, you’ll update the frontend in step 3.
+
+3) Start the frontend (Vite)
+
+    In a second terminal:
+    cd frontend
+    npm run dev
+
+    Make 5173 visible (Public or Private is fine since you open it yourself).
+    Open the 5173 forwarded URL (your Vite app).
+    If your 8080 URL changed (Option A)
+    Edit frontend/.env to point to the current 8080 URL:
+    VITE_API_URL=https://<your-8080-forwarded>.app.github.dev/api/v1
+    Then restart Vite (env changes require restart):
+
+    npm run dev
+
+4) Sanity check from the browser
+    On your Vite page, open DevTools → Console and run:
+    import('./src/api.js').then(m => m.api.health()).then(console.log).catch(console.error)
+
+    Expect: ok.
+
+5) Use the app
+    Signup or Login, then go to My Recipes.
+    Create/edit recipes as needed.
+
+Quick troubleshooting (tiny)
+
+curl localhost:8080/api/v1/healthz not ok
+    Rebuild/start API: docker compose up -d --build api
+    Check logs: docker compose logs -f api
+
+Browser 403 on 8080 URL
+    Set port 8080 visibility to Public.
+
+Browser 404 at /api/v1/healthz
+    Ensure this route exists in server.js:
+    ----
+    app.get("/api/v1/healthz", (_req, res) => res.send("ok"));
+    ----
+    *Rebuild API: docker compose up -d --build api
+
+CORS errors from frontend
+    Confirm frontend/.env has the 8080 HTTPS URL with /api/v1.
+    Restart Vite after changing .env.
+    In server.js, cors({ origin: "*" }) must be before routes.
+
+Token weirdness
+    Clear: localStorage.removeItem('token') (DevTools Console), log in again.
+
+When you’re done for the day
+    git add .
+    git commit -m "frontend: signup/login + recipes list working"
+    git push
+    docker compose down        # stops containers, keeps DB data
+    # docker compose down -v   # (optional) wipes DB data

@@ -4,6 +4,14 @@ import { requireAuth } from "../middleware/auth.js";
 
 const r = express.Router();
 
+// --- PUBLIC route (no token) ---
+// Public feed (no auth): newest first
+r.get("/feed", async (_req, res) => {
+  const recipes = await Recipe.find().sort({ createdAt: -1 }).limit(100);
+  res.json(recipes);
+});
+
+// --- everything below requires auth ---
 // Create
 r.post("/", requireAuth, async (req, res) => {
   try {
@@ -64,5 +72,6 @@ r.delete("/:id", requireAuth, async (req, res) => {
   await rec.deleteOne();
   res.json({ ok: true });
 });
+
 
 export default r;

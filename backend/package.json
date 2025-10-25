@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/server.js",
+    "db:up": "docker compose -f ../docker-compose.yml up -d mongo",
+    "db:down": "docker compose -f ../docker-compose.yml stop mongo",
+    "dev": "npm run db:up && nodemon src/server.js",
     "start": "node src/server.js"
   },
   "keywords": [],

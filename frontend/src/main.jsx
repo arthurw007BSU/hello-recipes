@@ -35,8 +35,7 @@ function Shell({ children }) {
         ) : (
           <>
             <Link to="/signup">Signup</Link>
-            <Link to="/login">Login</Link>
-            <Link to="/">Home</Link>            
+            <Link to="/login">Login</Link>         
           </>
         )}
       </header>

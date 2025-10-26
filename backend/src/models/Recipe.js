@@ -22,10 +22,20 @@ const recipeSchema = new mongoose.Schema(
       trim: true,
       match: /^https?:\/\/.+/i
     },
-    authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
+    authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    likedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] }]
   },
   { timestamps: true }
 );
+
+// virtual like count for easy display
+recipeSchema.virtual("likeCount").get(function () {
+  return this.likedBy?.length || 0;
+});
+
+// ensure virtuals are sent to the client
+recipeSchema.set("toJSON", { virtuals: true });
+recipeSchema.set("toObject", { virtuals: true });
 
 recipeSchema.index({ authorId: 1, createdAt: -1 });
 

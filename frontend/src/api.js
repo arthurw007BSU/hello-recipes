@@ -34,5 +34,13 @@ export const api = {
   getRecipe:    (token, id)      => request(`/recipes/${id}`, { token }),
   updateRecipe: (token, id, b)   => request(`/recipes/${id}`, { method: "PUT", body: b, token }),
   deleteRecipe: (token, id)      => request(`/recipes/${id}`, { method: "DELETE", token }),
-  feed: () => request("/recipes/feed"),
+  feed: (sort) => {
+  const query = sort ? `?sort=${encodeURIComponent(sort)}` : "";
+  return request(`/recipes/feed${query}`);
+  },
+
+  likeRecipe: (token, id)        => request(`/recipes/${id}/like`, { method: "POST", token }),
+
+
+
 };

@@ -24,23 +24,33 @@ export const api = {
   // health (for testing)
   health: () => request(`/healthz`),
 
-  // auth (we’ll use these next step)
-  signup: (username, password) => request(`/auth/signup`, { method: "POST", body: { username, password } }),
-  login:  (username, password) => request(`/auth/login`,  { method: "POST", body: { username, password } }),
+  // auth
+  signup: (username, password) =>
+    request(`/auth/signup`, { method: "POST", body: { username, password } }),
+  login: (username, password) =>
+    request(`/auth/login`, { method: "POST", body: { username, password } }),
 
-  // recipes (later)
-  myRecipes:    (token)          => request(`/recipes/mine`, { token }),
-  createRecipe: (token, payload) => request(`/recipes`, { method: "POST", body: payload, token }),
-  getRecipe:    (token, id)      => request(`/recipes/${id}`, { token }),
-  updateRecipe: (token, id, b)   => request(`/recipes/${id}`, { method: "PUT", body: b, token }),
-  deleteRecipe: (token, id)      => request(`/recipes/${id}`, { method: "DELETE", token }),
+  // recipes
+  myRecipes: (token) => request(`/recipes/mine`, { token }),
+
+  createRecipe: (token, payload) =>
+    request(`/recipes`, { method: "POST", body: payload, token }),
+
+  // 🔧 UPDATED: id first, token optional
+  getRecipe: (id, token) =>
+    request(`/recipes/${id}`, token ? { token } : {}),
+
+  updateRecipe: (token, id, b) =>
+    request(`/recipes/${id}`, { method: "PUT", body: b, token }),
+
+  deleteRecipe: (token, id) =>
+    request(`/recipes/${id}`, { method: "DELETE", token }),
+
   feed: (sort) => {
-  const query = sort ? `?sort=${encodeURIComponent(sort)}` : "";
-  return request(`/recipes/feed${query}`);
+    const query = sort ? `?sort=${encodeURIComponent(sort)}` : "";
+    return request(`/recipes/feed${query}`);
   },
 
-  likeRecipe: (token, id)        => request(`/recipes/${id}/like`, { method: "POST", token }),
-
-
-
+  likeRecipe: (token, id) =>
+    request(`/recipes/${id}/like`, { method: "POST", token }),
 };

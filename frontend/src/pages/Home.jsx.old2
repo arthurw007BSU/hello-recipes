@@ -1,7 +1,8 @@
-// frontend/src/pages/Home.jsx
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
+//---------------
+import { useNavigate } from "react-router-dom";          
+import { io } from "socket.io-client";                 
+//---------------------
 import { api } from "../api";
 
 export default function Home() {
@@ -11,8 +12,9 @@ export default function Home() {
   const [liking, setLiking] = useState({});
   const [sort, setSort] = useState(""); // "" | "popular"
 
+  //-------------------------------
   const [newRecipeNotice, setNewRecipeNotice] = useState(null);
-  const navigate = useNavigate();
+  const navigate = useNavigate();                               
 
   const loadFeed = useCallback(
     async (currentSort = sort) => {
@@ -34,8 +36,46 @@ export default function Home() {
     loadFeed();
   }, [loadFeed, sort]);
 
-  // 🔌 Socket.IO setup
+  // 🔌 Set up Socket.IO connection once when Home mounts
+  /*
   useEffect(() => {
+    const backendUrl =
+      import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+
+    const socket = io(backendUrl, {
+      transports: ["websocket", "polling"],
+    });
+
+    console.log("🔌 Connecting to Socket.IO at:", backendUrl);
+
+    socket.on("connect", () => {
+      console.log("✅ Socket connected:", socket.id);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Socket disconnected");
+    });
+
+    socket.on("newRecipe", (payload) => {
+      console.log("📣 newRecipe event:", payload);
+
+      if (payload?.id && payload?.title) {
+        setNewRecipeNotice({
+          id: payload.id,
+          title: payload.title,
+        });
+      }
+    });
+
+    return () => {
+      console.log("🔌 Cleaning up socket connection");
+      socket.disconnect();
+    };
+  }, []);
+*/
+
+  useEffect(() => {
+    // Use the same API URL as the rest of the app, and strip /api/v1 from it
     const raw = import.meta.env.VITE_API_URL;
     const fallback = window.location.origin;
 
@@ -43,7 +83,9 @@ export default function Home() {
     try {
       if (raw) {
         const u = new URL(raw);
-        socketUrl = u.origin; // strip /api/v1
+        // Example: raw = "https://improved-waddle-...-8080.app.github.dev/api/v1"
+        // u.origin = "https://improved-waddle-...-8080.app.github.dev"
+        socketUrl = u.origin;
       }
     } catch (e) {
       console.warn("Bad VITE_API_URL, using window.location.origin instead", e);
@@ -53,6 +95,7 @@ export default function Home() {
 
     const socket = io(socketUrl, {
       transports: ["websocket", "polling"],
+      // path: "/socket.io", // default; only change if you customized on server
     });
 
     socket.on("connect", () => {
@@ -65,6 +108,7 @@ export default function Home() {
 
     socket.on("newRecipe", (payload) => {
       console.log("📣 newRecipe event RECEIVED in Home:", payload);
+
       if (payload?.id && payload?.title) {
         setNewRecipeNotice({
           id: payload.id,
@@ -88,6 +132,7 @@ export default function Home() {
     try {
       setLiking((m) => ({ ...m, [id]: true }));
       await api.likeRecipe(token, id);
+      //  Always refresh feed to get accurate counts & correct sort order
       await loadFeed();
     } catch (e) {
       alert(`Like failed: ${e.message}`);
@@ -101,7 +146,8 @@ export default function Home() {
 
   function handleOpenNewRecipe() {
     if (!newRecipeNotice?.id) return;
-    navigate(`/recipes/${newRecipeNotice.id}`);
+    const id = newRecipeNotice.id;
+    navigate(`/recipes/${id}`);
     setNewRecipeNotice(null);
   }
 

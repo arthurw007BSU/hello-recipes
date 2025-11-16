@@ -1,83 +1,37 @@
-// frontend/src/pages/Home.jsx
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
 import { api } from "../api";
+
+import { useNavigate } from "react-router-dom";        // ⬅️ NEW
+import { io } from "socket.io-client";                // ⬅️ NEW
 
 export default function Home() {
   const [items, setItems] = useState([]);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
-  const [liking, setLiking] = useState({});
+  const [liking, setLiking] = useState({}); // map of recipeId -> true while liking
   const [sort, setSort] = useState(""); // "" | "popular"
 
+  // io code
   const [newRecipeNotice, setNewRecipeNotice] = useState(null);
-  const navigate = useNavigate();
+  const navigate = useNavigate();                               
 
-  const loadFeed = useCallback(
-    async (currentSort = sort) => {
-      try {
-        setLoading(true);
-        setErr("");
-        const data = await api.feed(currentSort);
-        setItems(Array.isArray(data) ? data : []);
-      } catch (e) {
-        setErr(e.message || "Failed to load feed");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [sort]
-  );
+
+  const loadFeed = useCallback(async (currentSort = sort) => {
+    try {
+      setLoading(true);
+      setErr("");
+      const data = await api.feed(currentSort);
+      setItems(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setErr(e.message || "Failed to load feed");
+    } finally {
+      setLoading(false);
+    }
+  }, [sort]);
 
   useEffect(() => {
     loadFeed();
   }, [loadFeed, sort]);
-
-  // 🔌 Socket.IO setup
-  useEffect(() => {
-    const raw = import.meta.env.VITE_API_URL;
-    const fallback = window.location.origin;
-
-    let socketUrl = fallback;
-    try {
-      if (raw) {
-        const u = new URL(raw);
-        socketUrl = u.origin; // strip /api/v1
-      }
-    } catch (e) {
-      console.warn("Bad VITE_API_URL, using window.location.origin instead", e);
-    }
-
-    console.log("🔌 Connecting to Socket.IO at:", socketUrl);
-
-    const socket = io(socketUrl, {
-      transports: ["websocket", "polling"],
-    });
-
-    socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("❌ Socket disconnected");
-    });
-
-    socket.on("newRecipe", (payload) => {
-      console.log("📣 newRecipe event RECEIVED in Home:", payload);
-      if (payload?.id && payload?.title) {
-        setNewRecipeNotice({
-          id: payload.id,
-          title: payload.title,
-        });
-      }
-    });
-
-    return () => {
-      console.log("🔌 Cleaning up socket connection");
-      socket.disconnect();
-    };
-  }, []);
 
   async function toggleLike(id) {
     const token = localStorage.getItem("token");
@@ -88,6 +42,7 @@ export default function Home() {
     try {
       setLiking((m) => ({ ...m, [id]: true }));
       await api.likeRecipe(token, id);
+      //  Always refresh feed to get accurate counts & correct sort order
       await loadFeed();
     } catch (e) {
       alert(`Like failed: ${e.message}`);
@@ -99,17 +54,12 @@ export default function Home() {
     }
   }
 
-  function handleOpenNewRecipe() {
-    if (!newRecipeNotice?.id) return;
-    navigate(`/recipes/${newRecipeNotice.id}`);
-    setNewRecipeNotice(null);
-  }
-
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <h2 style={{ margin: 0, flex: 1 }}>All Recipes</h2>
 
+        {/* Sort control (supports rubric: "Sort by the most liked") */}
         <label style={{ fontSize: 14 }}>
           Sort:&nbsp;
           <select
@@ -123,26 +73,6 @@ export default function Home() {
           </select>
         </label>
       </div>
-
-      {newRecipeNotice && (
-        <div
-          style={{
-            marginTop: 12,
-            marginBottom: 8,
-            padding: 12,
-            borderRadius: 8,
-            background: "#ecfeff",
-            border: "1px solid #06b6d4",
-            cursor: "pointer",
-          }}
-          onClick={handleOpenNewRecipe}
-        >
-          <div style={{ fontWeight: 600 }}>✨ New recipe added!</div>
-          <div style={{ fontSize: 14 }}>
-            Click to view: <strong>{newRecipeNotice.title}</strong>
-          </div>
-        </div>
-      )}
 
       {err && (
         <p style={{ color: "crimson", marginTop: 12 }}>
@@ -194,7 +124,9 @@ export default function Home() {
                   style={{ objectFit: "cover", borderRadius: 8, flexShrink: 0 }}
                   onError={(e) => {
                     e.currentTarget.src =
-                      "https://cdn.pixabay.com/photo/2012/04/24/13/19/exclamation-40026_1280.png";
+                    "https://cdn.pixabay.com/photo/2012/04/24/13/19/exclamation-40026_1280.png"
+                    //"https://cdn.pixabay.com/photo/2022/07/15/18/12/cheese-burger-7323672_1280.jpg"
+                     //"https://via.placeholder.com/80?text=img";
                   }}
                 />
                 <div style={{ flex: 1 }}>
@@ -215,14 +147,7 @@ export default function Home() {
                     </div>
                   )}
 
-                  <div
-                    style={{
-                      marginTop: 6,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
+                  <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
                     <span aria-label="like count" title="Likes">
                       🔥 {count}
                     </span>

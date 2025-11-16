@@ -1,11 +1,17 @@
-// backend/src/routes/recipe.routes.js
+// backend/src/routes/reciperoutes.js
 import express from "express";
 import mongoose from "mongoose";
 import Recipe from "../models/Recipe.js";
 import { requireAuth } from "../middleware/auth.js";
+
 import { io } from "../server.js";
 
+
 const r = express.Router();
+
+
+
+
 
 /* -------------------------- PUBLIC (no auth) -------------------------- */
 
@@ -18,13 +24,7 @@ r.get("/feed", async (req, res) => {
 
     if (sort === "popular") {
       const popular = await Recipe.aggregate([
-        {
-          $addFields: {
-            likeCount: {
-              $size: { $ifNull: ["$likedBy", []] },
-            },
-          },
-        },
+        { $addFields: { likeCount: { $size: { $ifNull: ["$likedBy", []] } } } },
         { $sort: { likeCount: -1, createdAt: -1 } },
         { $limit: 100 },
       ]);
@@ -38,10 +38,7 @@ r.get("/feed", async (req, res) => {
 
     return res.json(recipes);
   } catch (err) {
-    return res.status(500).json({
-      error: "server_error",
-      detail: err.message,
-    });
+    return res.status(500).json({ error: "server_error", detail: err.message });
   }
 });
 
@@ -57,9 +54,9 @@ r.post("/", requireAuth, async (req, res) => {
       ingredients.length === 0 ||
       !imageUrl?.trim()
     ) {
-      return res.status(400).json({
-        error: "title, ingredients[], and imageUrl are required",
-      });
+      return res
+        .status(400)
+        .json({ error: "title, ingredients[], and imageUrl are required" });
     }
 
     const recipe = await Recipe.create({
@@ -72,13 +69,7 @@ r.post("/", requireAuth, async (req, res) => {
       authorId: req.user.id,
     });
 
-    console.log(
-      "📤 Emitting newRecipe for:",
-      recipe._id.toString(),
-      `"${recipe.title}"`
-    );
-
-    // Broadcast to all connected clients for the Socket.IO popup
+        // 🔔 NEW: broadcast to all connected clients
     io.emit("newRecipe", {
       id: recipe._id.toString(),
       title: recipe.title,
@@ -87,12 +78,12 @@ r.post("/", requireAuth, async (req, res) => {
       createdAt: recipe.createdAt,
     });
 
+
     return res.status(201).json(recipe);
   } catch (err) {
-    return res.status(400).json({
-      error: "invalid_recipe_data",
-      detail: err.message,
-    });
+    return res
+      .status(400)
+      .json({ error: "invalid_recipe_data", detail: err.message });
   }
 });
 
@@ -102,13 +93,9 @@ r.get("/mine", requireAuth, async (req, res) => {
     const recipes = await Recipe.find({ authorId: req.user.id })
       .sort({ createdAt: -1 })
       .lean();
-
     return res.json(recipes);
   } catch (err) {
-    return res.status(500).json({
-      error: "server_error",
-      detail: err.message,
-    });
+    return res.status(500).json({ error: "server_error", detail: err.message });
   }
 });
 
@@ -122,9 +109,8 @@ r.put("/:id", requireAuth, async (req, res) => {
 
     const rec = await Recipe.findById(id);
     if (!rec) return res.status(404).json({ error: "not_found" });
-    if (rec.authorId.toString() !== req.user.id) {
+    if (rec.authorId.toString() !== req.user.id)
       return res.status(403).json({ error: "forbidden" });
-    }
 
     const { title, ingredients, imageUrl } = req.body || {};
     if (title !== undefined) rec.title = title;
@@ -134,10 +120,9 @@ r.put("/:id", requireAuth, async (req, res) => {
     await rec.save();
     return res.json(rec);
   } catch (err) {
-    return res.status(400).json({
-      error: "invalid_recipe_data",
-      detail: err.message,
-    });
+    return res
+      .status(400)
+      .json({ error: "invalid_recipe_data", detail: err.message });
   }
 });
 
@@ -151,17 +136,13 @@ r.delete("/:id", requireAuth, async (req, res) => {
 
     const rec = await Recipe.findById(id);
     if (!rec) return res.status(404).json({ error: "not_found" });
-    if (rec.authorId.toString() !== req.user.id) {
+    if (rec.authorId.toString() !== req.user.id)
       return res.status(403).json({ error: "forbidden" });
-    }
 
     await rec.deleteOne();
     return res.json({ ok: true });
   } catch (err) {
-    return res.status(500).json({
-      error: "server_error",
-      detail: err.message,
-    });
+    return res.status(500).json({ error: "server_error", detail: err.message });
   }
 });
 
@@ -198,10 +179,7 @@ r.post("/:id/like", requireAuth, async (req, res) => {
 
     return res.json({ added: !alreadyLiked, likeCount });
   } catch (err) {
-    return res.status(500).json({
-      error: "server_error",
-      detail: err.message,
-    });
+    return res.status(500).json({ error: "server_error", detail: err.message });
   }
 });
 
@@ -220,10 +198,7 @@ r.get("/:id", async (req, res) => {
 
     return res.json(rec);
   } catch (err) {
-    return res.status(500).json({
-      error: "server_error",
-      detail: err.message,
-    });
+    return res.status(500).json({ error: "server_error", detail: err.message });
   }
 });
 
